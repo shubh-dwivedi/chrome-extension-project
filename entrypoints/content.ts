@@ -66,16 +66,16 @@ export default defineContentScript({
     let parentElement: HTMLElement | null = null;
     let lastGeneratedMessageContent = "";
 
-    // check for message element focus and add/remove AI Icon accordingly.
+    // check for focus on message div element and add/remove AI Icon accordingly.
     function checkPageFocus() {
       if (document.hasFocus()) {
         var activeElement = document.activeElement;
-        let myElement = document.querySelector(".msg-form__contenteditable > p")?.parentElement;
+        let messageElement = document.querySelector(".msg-form__contenteditable > p")?.parentElement;
 
-        if(activeElement === myElement) {
-          if(!myElement?.querySelector(".edit-icon")) {
+        if(activeElement === messageElement) {
+          if(!messageElement?.querySelector(".ai-message-icon")) {
             const icon = document.createElement("img");
-            icon.className = "edit-icon";
+            icon.className = "ai-message-icon";
             icon.src = editIcon;
             icon.alt = "Custom Icon";
             icon.style.position = "absolute";
@@ -85,7 +85,7 @@ export default defineContentScript({
             icon.style.height = "30px";
             icon.style.cursor = "pointer";
             icon.style.zIndex = "1000";
-            myElement?.appendChild(icon);
+            messageElement?.appendChild(icon);
   
             icon.addEventListener("click", (e) => {
               e.stopPropagation();
@@ -94,12 +94,12 @@ export default defineContentScript({
           }
 
           if(!parentElement) {
-            parentElement = myElement || null;
+            parentElement = messageElement || null;
           }
         } else {
-          if(myElement?.querySelector(".edit-icon")) {
-            const icon = myElement?.querySelector(".edit-icon") as HTMLBaseElement;
-            myElement.removeChild(icon);
+          if(messageElement?.querySelector(".ai-message-icon")) {
+            const icon = messageElement?.querySelector(".ai-message-icon") as HTMLBaseElement;
+            messageElement.removeChild(icon);
           }
         }
       }
@@ -113,7 +113,7 @@ export default defineContentScript({
         modalMain &&
         !modalContent.contains(target) &&
         modalMain.style.display === "flex" &&
-        !target.classList.contains("edit-icon")
+        !target.classList.contains("ai-message-icon")
       ) {
         modalMain.style.display = "none";
         regenerateBtn.style.display = "none";
@@ -167,7 +167,7 @@ export default defineContentScript({
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
         generateBtn.disabled = false;
         
-        // Hide Generate and show Regenerate button
+        // Hide Generate Button and show Regenerate Button
         generateBtn.style.display = "none";
         regenerateBtn.style.display = "inline-block";
         
@@ -176,14 +176,22 @@ export default defineContentScript({
       }, 300);
     });
     
-    // insert message inside Linkedin message box
+    // Insert message inside Linkedin message box
     insertBtn.addEventListener("click", () => {
       if (lastGeneratedMessageContent && parentElement) {
+        const messagePlaholderElement = document.querySelector(".msg-form__placeholder");
         const messageParagraph = document.createElement("p");
+        messageParagraph.id = "generated-message-new"
         messageParagraph.textContent = lastGeneratedMessageContent;
+
+        // add message paragraph element to Message input
         parentElement.innerHTML = ``;
         parentElement.appendChild(messageParagraph);
         parentElement.focus();
+
+        // remove Message input placeholder text "Write a message..."
+        messagePlaholderElement?.classList.remove("msg-form__placeholder");
+
         insertBtn.style.display = "none";
         regenerateBtn.style.display = "none";
         generateBtn.style.display = "inline-block";
